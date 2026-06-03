@@ -54,7 +54,9 @@ By default the SWM binary (swm) will be installed to user $HOME/bin/ folder, you
 There is a handy little script 0-preview in the source folder which you can
 use to try SWM in you current window manager using the Xephyr X11 server. 0-preview in turn uses 1-xinitrc to start some terminals when SWM starts up - just to give you some ideas on how to create startup applications. All this is for testing/experimenting only.
 
+## Miscellany
+I've included the source code for a handy little utility called launch-it.
 
-
+It's a simple application launcher which is activated by pressing WIN+space, by default. It'll show a simple dialog where you can start typing the app name and it'll show matches. You can then use the TAB (or Shift+TAB) key to navigate through them - only the best 5 matches are shown by default. Pressing the Enter/Return key will launch the selected application. It is written in Tcl/Tk, a much under-rated, yet well-thought-out, programming language. Launch-it depends on the stest utility that you need to install first.
 
 

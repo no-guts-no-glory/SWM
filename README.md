@@ -58,3 +58,8 @@ use to try SWM in you current window manager using the Xephyr X11 server. 0-prev
 I've included the source code for a handy little utility called launch-it.
 
 It's a simple application launcher which is activated by pressing WIN+space, by default. It'll show a simple dialog where you can start typing the app name and it'll show matches. You can then use the TAB (or Shift+TAB) key to navigate through them - only the best 5 matches are shown by default. Pressing the Enter/Return key will launch the selected application. It is written in Tcl/Tk, a much under-rated, yet well-thought-out programming language (it runs circles around Java and the likes). Launch-it depends on the stest utility that you need to install first.
+
+## Disclaimer
+Although I have been using SWM for the past year in a production environment each and every day, both at work and at home without any issues (other than the one mentioned above), no software is 100% bug free and SWM is no exception.
+
+Since I'm the author, I'm used to it and know how to use it, so it works great for me. If you decide to use it make sure you test it first before installing it as your main window manager and ***also note that I provide the software as is with no guaranties whatsoever***. Use it at your own risk.

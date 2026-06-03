@@ -15,15 +15,25 @@ Give it a try, I'm sure you won't be disappointed. One warning though - it does 
 ## Why another WM?
 There are, literally, hundreds of WMs and I have tried a **lot** of them. Most of them are great and I used them in the past in my daily work. Just a few examples of my favourites (in order of preference): the classic DWM, Sdorfehs, Notion, StumpWM. They are all great WM and are, on the technical level, probably better than SWM, they still struggle with "popup" type windows. However, I wanted something simple, with no dependencies, specially no external languages like LUA, LISP or SCHEME e.t.c. and something I can understand and change any time. There was also the curiosity of how to actually code one.
 
-## Hacking it
-At the heart of it, SWM is basically a list-manager, surprisingly with very little graphics programming. Most window managers use global variables for managing windows and I found them messy and hard to understand. With SWM, desktops and windows are just simple list structures that are easily managed and allow for any layouts you could ever desire. If you wanted frame-based window layouts you can easily add another level by creating lists of frames and arrange them any way you like, all the functions already exist in SWM and hopefully the code is clear enough for you to understand and modify if you want something different.
+## Usage
+Once you've built SWM (see below) there is a few simple things you need to remember - all functions are activated by keyboard shortcuts which **always** include the "MOD" key (WIN/SUPER by default). The only exception to this is switching from one desktop to another where only the function keys are used, i.e. F1 for desktop-1, F2 for desktop-2 e.t.c. Also note that all windows will be placed in the centre of the screen by default, this can be over-ridden, on a per application class basis, by lines in the config.h file, have a look at it to get the gist of it. Just copy/paste existing lines and modify to "taste." Also SWM allows you to have **one** hidden window per desktop - for when the boss shows up...
 
-Though the code has been written from scratch, I did get some inspiration from the above mentioned WMs. A notable case is the use of the "config.h" file in place of external languages for configuring it. As far as I can tell, none of them use the list based structure.
+Here are just a few shortcuts to get you started:
 
-## How start
+~~~
+- WIN+Return - start a terminal,
+- WIN+[      - snap it to the left side of the screen,
+- WIN+]      - snap it to the right side of the screen,
+- WIN+l      - list all windows on all desktops (lower case L),
+- WIN+k      - cascade windows (ala MS),
+- WIN+m      - maximise window,
+- WIN+i      - hide current window or unhide hidden one, e.t.c.
+~~~
+
 There is a HTML file describing the default shortcuts, wm-manual.html. Have a look at it to get started then look at the config.h file. It gives you the default keyboard shortcuts and the functions available to deal with windows (called clients) and desktops and examples of how to pre-configure application window placement.
 
-Compiling it is a simple matter of running
+## Building SWM
+Compiling SWM is a simple matter of running
 ~~~
 make -B && make install
 ~~~
@@ -53,6 +63,11 @@ By default the SWM binary (swm) will be installed to the $HOME/bin/ folder, you 
 
 There is a handy little script 0-preview in the source folder which you can
 use to try SWM in you current window manager using the Xephyr X11 server. 0-preview in turn uses 1-xinitrc to start some terminals when SWM starts up - just to give you some ideas on how to create startup applications. All this is for testing/experimenting only.
+
+## Hacking SWM
+At the heart of it, SWM is basically a list-manager, surprisingly with very little graphics programming. Most window managers use global variables/structures for managing windows and I found them messy and hard to understand. With SWM, desktops and windows are just simple list structures that are easily managed and allow for any layouts you could ever desire. If you wanted frame-based window layouts you can easily add another level by creating lists of frames and arrange them any way you like, all the functions already exist in SWM and hopefully the code is clear enough for you to understand and modify if you want something different.
+
+Though the code has been written from scratch, I did get some inspiration from the above mentioned WMs. A notable case is the use of the "config.h" file in place of external languages for configuring it. As far as I can tell, none of them use the list based structure.
 
 ## Miscellany
 I've included the source code for a handy little utility called launch-it.

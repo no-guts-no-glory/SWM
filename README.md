@@ -21,16 +21,25 @@ Once you've built SWM (see below) there is a few simple things you need to remem
 Here are just a few shortcuts to get you started:
 
 ~~~
-- WIN+Return - start a terminal,
-- WIN+[      - snap it to the left side of the screen,
-- WIN+]      - snap it to the right side of the screen,
-- WIN+l      - list all windows on all desktops (lower case L),
-- WIN+k      - cascade windows (ala MS),
-- WIN+m      - maximise window,
-- WIN+i      - hide current window or unhide hidden one, e.t.c.
+WIN+Return - start a terminal,
+WIN+[      - snap it to the left side of the screen,
+WIN+]      - snap it to the right side of the screen,
+WIN+l      - list all windows on all desktops (lower case L),
+WIN+k      - cascade windows (ala MS),
+WIN+m      - maximise window,
+WIN+i      - hide current window or unhide hidden one, e.t.c.
 ~~~
 
-There is a HTML file describing the default shortcuts, wm-manual.html. Have a look at it to get started then look at the config.h file. It gives you the default keyboard shortcuts and the functions available to deal with windows (called clients) and desktops and examples of how to pre-configure application window placement.
+Some keyboards don't have numeric pads to use as "North", "South" e.t.c keys, so I've decided to use the "qwe asd zxc" keys as virtual keypad. This allows you to place/resize windows to specific position in a quick and easy manner with very little movement of your fingers, some examples below:
+
+~~~
+WIN+q - snap window to NW (north-west),
+WIN+w - snap window to N,
+WIN+d - snap window to E,
+WIN+x - snap window to S, e.t.c.
+~~~
+
+There is a HTML file describing the default shortcuts, wm-manual.html. Have a look at it to get started then look at the config.h file. It gives you the default keyboard shortcuts and the functions available to deal with windows (called clients) and desktops and examples of how to pre-configure application window placement. You can also run the "print-shortcuts" script in the source folder in a terminal window to list the default keyboard shortcuts.
 
 ## Building SWM
 Compiling SWM is a simple matter of running

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# ---------------------------------------------------------------------------
+# --  filename: print-shortcuts
+# --   purpose: display keyboard shortcut for simple window manager
+# --   created: 14.05.2025
+# --    author: fkish@1slash1.com
+# -- tab width: 2
+# ---------------------------------------------------------------------------
+clear && cat config.h                \
+ | sed    's#|#+#'                   \
+ | sed -r 's#^\\#\n#'                \
+ | egrep '^$|\s+\{(MODKEY|CTRL|ALL)' \
+ | sed -r 's#[{},\]##g'              \
+ | sed -r 's#\.(i|ptr)\s*=\s*##'     \
+ | sed -r 's#XK_##g'                 \
+ | sed -r '/^$/N;/^\n$/D'            \
+ | awk '{printf("%-12s\t%-10s\t%-30s\t%s\n",$1,$2,$3,$4)}'
+

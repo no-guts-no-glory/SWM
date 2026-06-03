@@ -1,0 +1,17 @@
+# ---------------------------------------------------------------------------
+# --  filename: 1-xinitrc
+# --   purpose: provide startup commands for xinit
+# --   created: 10.05.2025
+# --    author: fkish@1slash1.com
+# -- tab width: 2
+# ---------------------------------------------------------------------------
+xsetroot -solid "#bfbfbf" &
+
+uxterm -geometry 80x15 &
+uxterm -geometry 80x15 &
+uxterm -geometry 80x15 &
+uxterm -geometry 80x15 &
+uxterm -geometry 80x15 &
+
+exec ./swm
+

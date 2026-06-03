@@ -1,0 +1,232 @@
+#!/usr/bin/env tclsh
+# ---------------------------------------------------------------------------
+# --  filename: launch-it
+# --   purpose: launch applications from a simple dialog
+# --   created: 29.07.2024
+# --    author: fkish@1slash1.com
+# -- tab width: 2
+# ---------------------------------------------------------------------------
+package require Tk
+
+# ---------------------------------------------------------------------------
+proc all_done {} {
+# ---------------------------------------------------------------------------
+  after 350 {
+    exit 0
+  }
+  update idle ; update
+}
+
+# ---------------------------------------------------------------------------
+proc file_read {fname} {
+# ---------------------------------------------------------------------------
+  set lines {}
+  if {![catch {open $fname} res]} {
+    set lines [read $res]
+    close $res
+  }
+  set res {}
+  foreach line [split $lines "\n"] {
+    if {[string length [set line [string trim $line]]]} {
+      lappend res $line
+    }
+  }
+  return $res
+}
+
+# ---------------------------------------------------------------------------
+proc file_write {fname txt} {
+# ---------------------------------------------------------------------------
+  if {[catch {open $fname w} res]} {
+    exit -1
+  }
+  puts $res $txt
+  close $res
+}
+
+# ---------------------------------------------------------------------------
+proc conf_fname {} {
+# ---------------------------------------------------------------------------
+  return "$::env(HOME)/launch-it.conf"
+}
+
+# ---------------------------------------------------------------------------
+proc load_conf {} {
+# ---------------------------------------------------------------------------
+  set ::g_conf {}
+  if {[set lines [file_read [conf_fname]]] != {}} {
+    foreach line $lines {
+      lassign [split $line "\t"] cmd secs
+      lappend ::g_conf [list $cmd $secs]
+    }
+    set ::g_conf [lsort -unique -decreasing -real -index 1 $::g_conf]
+    foreach next $::g_conf {
+      lappend from [lindex $next 0]
+    }
+    mk_btns $from
+  }
+}
+
+# ---------------------------------------------------------------------------
+proc save_conf {} {
+# ---------------------------------------------------------------------------
+  set res {}
+  set sorted [lsort -unique -decreasing -real -index 1 $::g_conf]
+  foreach conf $sorted {
+    lappend res [join $conf "\t"]
+  }
+  file_write [conf_fname] [join $res "\n"]
+}
+
+# ---------------------------------------------------------------------------
+proc sanitise {cmd} {
+# ---------------------------------------------------------------------------
+  return [regsub {^\d+:} $cmd ""]
+}
+
+# ---------------------------------------------------------------------------
+proc run {cmd} {
+# ---------------------------------------------------------------------------
+  set match 0
+  set now [clock seconds]
+  set cmd [sanitise $cmd]
+  for {set i 0} {$i < [llength $::g_conf]} {incr i} {
+    lassign [lindex $::g_conf $i] _cmd _secs
+    if {$_cmd == $cmd} {
+      set match 1
+      lset ::g_conf $i [list $_cmd $now]
+      break
+    }
+  }
+  if {!$match} {
+    lappend ::g_conf [list $cmd $now]
+  }
+  save_conf
+  if {[catch {exec {*}$cmd &} res]} {
+    file_write $::g_log $res
+  }
+  all_done
+}
+
+# ---------------------------------------------------------------------------
+proc on_cmd {} {
+# ---------------------------------------------------------------------------
+  run $::g_cmd
+}
+
+# ---------------------------------------------------------------------------
+proc on_button {ndx} {
+# ---------------------------------------------------------------------------
+  lassign [lindex $::g_conf [incr ndx -1]] cmd time
+  run $cmd
+}
+
+# ---------------------------------------------------------------------------
+proc mk_btns {from} {
+# ---------------------------------------------------------------------------
+  if {$from != {}} {
+    set ::g_ui_btns [ttk::frame .ui_btns]
+    pack $::g_ui_btns -side top -fill x
+    foreach lbl $from {
+      incr ndx
+      set  txt "$ndx: $lbl"
+      set  btn [button $::g_ui_btns.b$ndx -text $txt \
+        -highlightthickness 2   \
+        -highlightcolor #ac0000 \
+        -command [list on_button $ndx] \
+      ]
+      pack $btn -side left -fill x -expand 1 -padx 2 -pady 4
+      bind $btn <Return> [list run $lbl]
+      if {$ndx == $::g_max_buttons} {
+        break
+      }
+    }
+  }
+}
+
+# ---------------------------------------------------------------------------
+proc on_char {args} {
+# ---------------------------------------------------------------------------
+  if {$::g_ui_btns != {}} {
+    destroy $::g_ui_btns
+    set ::g_ui_btns {}
+  }
+  if {[string length $::g_cmd] > 1} {
+    set res {}
+    set cmd [sanitise $::g_cmd]
+    set top [expr {$::g_max_buttons - 1}]
+    foreach pos [lrange [lsearch -all $::g_all *$cmd*] 0 $top] {
+      if {[set lbl [lindex $::g_all $pos]] == $::g_cmd} {
+        # -- put exact match to beginning of list
+        set res [linsert $res 0 $lbl]
+      } else {
+        lappend res $lbl
+      }
+    }
+    mk_btns $res
+  }
+}
+
+# ---------------------------------------------------------------------------
+proc mk_helper {} {
+# ---------------------------------------------------------------------------
+  set helper /tmp/find-exes
+  if {![file exists $helper]} {
+    file_write $helper "#!/usr/bin/env bash\nIFS=:\nstest -fxl \$PATH | sort -u\n"
+    catch {exec chmod +x $helper}
+  }
+  return $helper
+}
+
+# ---------------------------------------------------------------------------
+proc shortcut {k} {
+# ---------------------------------------------------------------------------
+  # -- 5 buttons -> 5 shortcuts
+  if {[expr {$k > 0 && $k <= $::g_max_buttons}]} {
+    foreach btn [winfo children $::g_ui_btns] {
+      if {[regexp "^$k: (.+)$" [$btn cget -text] -> cmd]} {
+        run $cmd
+        break
+      }
+    }
+  }
+}
+
+# ---------------------------------------------------------------------------
+proc build_ui {} {
+# ---------------------------------------------------------------------------
+  font create new -family "Liberation Sans" -size 10
+  option add *font new
+
+  set ::g_ui_btns {}
+  set ::g_ui_cmd [ttk::entry .ui_cmd -textvar ::g_cmd]
+  pack $::g_ui_cmd -side top -fill x -padx 4 -pady 2
+  bind $::g_ui_cmd <Return> on_cmd
+
+  wm minsize    . 640 56
+  wm maxsize    . 640 56
+  wm title      . launch-it
+  wm attributes . -type dialog
+  wm protocol   . WM_DELETE_WINDOW all_done
+  bind          . <Escape> all_done
+  foreach k {1 2 3 4 5} {
+    bind . <Control-Key-$k> [list shortcut $k]
+  }
+
+  trace add variable ::g_cmd write on_char
+  focus $::g_ui_cmd
+}
+
+# ---------------------------------------------------------------------------
+# -- star here
+# ---------------------------------------------------------------------------
+set ::g_cmd  {}
+set ::g_conf {}
+set ::g_max_buttons 5
+set ::g_log  [format "/tmp/%s.err" [file tail $::argv0]]
+if {[catch {exec [mk_helper]} ::g_all]} {
+  file_write $::g_log $::g_all
+}
+build_ui
+load_conf
+

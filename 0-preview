@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# ---------------------------------------------------------------------------
+# --  filename: 0-preview
+# --   purpose: test swm with Xephyr
+# --   created: 10.05.2025
+# --    author: fkish@1slash1.com
+# -- tab width: 2
+# ---------------------------------------------------------------------------
+make -B && \
+xinit ./1-xinitrc -- /usr/bin/Xephyr :100 -ac -screen 1000x700 -host-cursor
+

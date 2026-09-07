@@ -191,7 +191,7 @@ WIN+w         Snap the window to the north
 WIN+e         Snap the window to the north-east
 
 WIN+a         Snap the window to the west
-WIN+s         Centre or arrange the window
+WIN+s         Centre the window
 WIN+d         Snap the window to the east
 
 WIN+z         Snap the window to the south-west
@@ -200,8 +200,9 @@ WIN+c         Snap the window to the south-east
 ```
 
 These shortcuts can also be used as part of the available positioning and
-resizing functions. Refer to `wm-manual.html` and `config.h` for the complete
-list.
+resizing functions. For example, WIN+s centres the window, WIN+Shift+s,
+centres *and* resizes the window to half the screen width and height.
+Refer to `wm-manual.html` and `config.h` for the complete list.
 
 ## Documentation
 

@@ -9,20 +9,20 @@
 #define OTHER          Mod1Mask             // -- both of these
 #define SHIFT          ShiftMask
 #define CTRL           ControlMask
-#define ALL_CTRL       (MODKEY|CTRL|OTHER)  // -- this is the only place
+#define ALL_CTRL       (MODKEY|CTRL)        // -- this is the only place
 																						// -- where OTHER is used
 
 // --------------------------------------------------------------------------
 #define DESKTOPS       4          // -- can be anything, I've found 4 more than enough
                                   // -- in my daily work
-#define BORDER_WIDTH   1
+#define BORDER_WIDTH   2
 #define MIN_WIDTH      100
 #define MIN_HEIGHT     100
 
 #define SHIFT_AMOUNT   4          // -- number of pixels to move windows by
 
 #define CLR_SELECTED   "#ffa500"
-#define CLR_UNSELECTED "#7f7f7f"
+#define CLR_UNSELECTED "#bfbfbf"
 
 #define EDITOR         "vim"
 #define LAUNCHER       "launch-it"
@@ -139,7 +139,6 @@ char* g_terminal  [] = {TERMINAL,   NULL};
   {"firefox",       client_maximize, { } },                                               \
   {"vieb",          client_maximize, { } },                                               \
   {"Viewnior",      client_maximize, { } },                                               \
-  {"keepass",       client_snap_to,  {.i = DIRECTION_E} },                                \
   {"zathura",       client_center,   {.width = 860, .height = -1} },                      \
   {"free42",        client_place,    {.i = DIRECTION_W} },                                \
 

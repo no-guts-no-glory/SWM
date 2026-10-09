@@ -8,7 +8,6 @@
 #include "swm.h"
 
 // --------------------------------------------------------------------------
-#define DRAG_THRESHOLD   16
 #define MINIMIZED_HEIGHT 20
 #define BORDER_2_WIDTH   (2*BORDER_WIDTH)
 
@@ -56,8 +55,6 @@ static void              handle_mapnotify             (XEvent *ev);
 static void              handle_motionnotify          (XEvent *ev);
 static void              handle_unmapnotify           (XEvent *ev);
 static void              handle_configurenotify       (XEvent *ev);
-static void              handle_enternotify           (XEvent *ev);
-
 
 static int               window_ignore                (Window win);
 static void              window_resize                (Node*  n, int x, int y, int w, int h);
@@ -80,9 +77,6 @@ static ulong             g_clr_unselected;
 static List*             g_clients;
 static List*             g_desktops;
 
-static int               g_last_motion_x;
-static int               g_last_motion_y;
-
 // --------------------------------------------------------------------------
 static void (*g_event_handlers[LASTEvent])(XEvent*) = {
 // --------------------------------------------------------------------------
@@ -93,7 +87,6 @@ static void (*g_event_handlers[LASTEvent])(XEvent*) = {
   [MapNotify      ] = handle_mapnotify,
   [UnmapNotify    ] = handle_unmapnotify,
   [ConfigureNotify] = handle_configurenotify,
-  [EnterNotify    ] = handle_enternotify,
 };
 
 // --------------------------------------------------------------------------
@@ -207,24 +200,24 @@ static void wind_down(void) {
 // --------------------------------------------------------------------------
 static void quit(Args args) {
 // --------------------------------------------------------------------------
-  wind_down();
+	wind_down();
   exit(args.i);
 }
 
 // --------------------------------------------------------------------------
 static void shutdown(Args args) {
 // --------------------------------------------------------------------------
-  wind_down();
-  setuid(0);
-  system("sudo shutdown -P now");
+	wind_down();
+	setuid(0);
+	system("sudo shutdown -P now");
 }
 
 // --------------------------------------------------------------------------
 static void reboot(Args args) {
 // --------------------------------------------------------------------------
-  wind_down();
-  setuid(0);
-  system("sudo reboot");
+	wind_down();
+	setuid(0);
+	system("sudo reboot");
 }
 
 // --------------------------------------------------------------------------
@@ -309,6 +302,7 @@ static void window_resize(Node* n, int x, int y, int w, int h) {
     }
   }
   XMoveResizeWindow(g_display, n->data, x, y, w, h);
+  XFlush(g_display);
 }
 
 // --------------------------------------------------------------------------
@@ -407,6 +401,7 @@ static void client_unselect(Node* n) {
     Window win = n->data;
     if (win) {
       XSetWindowBorder(g_display, win, g_clr_unselected);
+      XSetInputFocus(g_display, win, RevertToPointerRoot, CurrentTime);
     }
   }
 }
@@ -415,6 +410,7 @@ static void client_unselect(Node* n) {
 static void client_hide(Node* n) {
 // --------------------------------------------------------------------------
   if (n && n->data) {
+    // XMoveResizeWindow(g_display, n->data, g_screen_w+1, 0, n->w, n->h);
     XMoveWindow(g_display, n->data, g_screen_w+1, 0);
   }
 }
@@ -424,6 +420,7 @@ static void client_unhide(Node* n) {
 // --------------------------------------------------------------------------
   if (n && n->data) {
     if (n->state != STATE_HIDDEN) {
+      // XMoveResizeWindow(g_display, n->data, n->x, n->y, n->w, n->h);
       if (n->state == STATE_MAXIMIZED) {
         XMoveWindow(g_display, n->data, -BORDER_WIDTH, -BORDER_WIDTH);
       } else {
@@ -460,40 +457,19 @@ static void client_hide_cur(Args arg) {
 static void client_kill(Args args) {
 // --------------------------------------------------------------------------
   Node *n = cur_client();
-  if (!n || !n->data) {
-    return;
+  if (!n) {return;}
+
+  Window win = n->data;
+  if (win) {
+    XEvent ev;
+    ev.xclient.format       = 32;
+    ev.xclient.window       = win;
+    ev.xclient.type         = ClientMessage;
+    ev.xclient.message_type = XInternAtom(g_display, "WM_PROTOCOLS", true);
+    ev.xclient.data.l[0]    = XInternAtom(g_display, "WM_DELETE_WINDOW",false);
+    ev.xclient.data.l[1]    = CurrentTime;
+    XSendEvent(g_display, win, False, NoEventMask, &ev);
   }
-
-  Atom *protocols = NULL;
-  int count = 0;
-  Atom wm_delete = XInternAtom(g_display, "WM_DELETE_WINDOW", False);
-
-  if (!XGetWMProtocols(g_display, n->data, &protocols, &count)) {
-    return;  // The client didn't provide a WM_PROTOCOLS list.
-  }
-
-  int supports_delete = 0;
-  for (int i = 0; i < count; i++) {
-    if (protocols[i] == wm_delete) {
-      supports_delete = 1;
-      break;
-    }
-  }
-  XFree(protocols);
-
-  if (!supports_delete) {
-    return;  // Don't send a close message the client hasn't advertised.
-  }
-
-  XEvent ev = {0};
-  ev.xclient.type         = ClientMessage;
-  ev.xclient.window       = n->data;
-  ev.xclient.message_type = XInternAtom(g_display, "WM_PROTOCOLS", False);
-  ev.xclient.format       = 32;
-  ev.xclient.data.l[0]    = wm_delete;
-  ev.xclient.data.l[1]    = CurrentTime;
-
-  XSendEvent(g_display, n->data, False, NoEventMask, &ev);
 }
 
 // --------------------------------------------------------------------------
@@ -542,7 +518,7 @@ static void client_move_to(Args args) {
   int y = args.y;
   int w = n->w;
   int h = n->h;
-  window_resize(n, x, y, w, h);
+	window_resize(n, x, y, w, h);
 }
 
 // --------------------------------------------------------------------------
@@ -721,7 +697,6 @@ static void client_resize(Args args) {
       w += shift_amount;
     }
     window_resize(n, x, y, w, h);
-    XFlush(g_display);
   }
 }
 
@@ -812,8 +787,8 @@ static void client_to_desktop(Args args) {
   if (!cur || from->data == i || i < 0 || i > DESKTOPS) {
     return;
   }
-
   client_hide(cur);
+
   Node* new = node_clone(cur);
   Node* nxt = list_remove(g_clients, cur);
 
@@ -844,7 +819,7 @@ static void handle_mapnotify(XEvent *ev) {
     if (!window_ignore(win)) {
       char name[MAX_TITLE_LEN+1];
       Node* n = list_add_after_cur(g_clients, win);
-      XSelectInput(g_display, win, EnterWindowMask | PropertyChangeMask);
+      XSelectInput(g_display, win, PropertyChangeMask | ClientMessage);
       client_select(n);
       if (window_name(win, name, MAX_TITLE_LEN)) {
         int placed = 0;
@@ -918,10 +893,7 @@ static void handle_buttonpress(XEvent *ev) {
       PointerMotionMask|ButtonReleaseMask, GrabModeAsync,
       GrabModeAsync, None, None, CurrentTime);
     XGetWindowAttributes(g_display, win, &g_attr);
-
     g_bevent = ev->xbutton;
-    g_last_motion_x = g_bevent.x_root;
-    g_last_motion_y = g_bevent.y_root;
 
     Node* n = list_find(g_clients, win);
     if (n) {
@@ -952,30 +924,11 @@ static void handle_motionnotify(XEvent *ev) {
 
   Window win = n->data;
   if (win == ev->xmotion.window) {
-    XEvent latest = *ev;
-    XEvent next;
-
-    while (XCheckTypedWindowEvent(g_display, latest.xmotion.window, MotionNotify, &next)) {
-      latest = next;
+    while(XCheckTypedEvent(g_display, MotionNotify, ev)) {
+      // -- wait for mouse move to stop
     }
-
-    int mouse_x = latest.xmotion.x_root;
-    int mouse_y = latest.xmotion.y_root;
-
-    int step_x = mouse_x - g_last_motion_x;
-    int step_y = mouse_y - g_last_motion_y;
-
-    // Ignore small movement in both directions.
-    if (abs(step_x) < DRAG_THRESHOLD && abs(step_y) < DRAG_THRESHOLD) {
-      return;
-    }
-
-    g_last_motion_x = mouse_x;
-    g_last_motion_y = mouse_y;
-
-    g_dx = mouse_x - g_bevent.x_root;
-    g_dy = mouse_y - g_bevent.y_root;
-
+    g_dx = ev->xbutton.x_root - g_bevent.x_root;
+    g_dy = ev->xbutton.y_root - g_bevent.y_root;
     int x = g_attr.x, y = g_attr.y, w = g_attr.width, h = g_attr.height;
     if ((g_bevent.button == 1 && n->state != STATE_MAXIMIZED)
      || (g_bevent.button == 3 && n->state == STATE_MINIMIZED)) {
@@ -1019,21 +972,6 @@ static void handle_motionnotify(XEvent *ev) {
 }
 
 // --------------------------------------------------------------------------
-static void handle_enternotify(XEvent *ev) {
-// --------------------------------------------------------------------------
-  XCrossingEvent *e = &ev->xcrossing;
-
-  if (e->mode != NotifyNormal || e->detail == NotifyInferior) {
-    return;
-  }
-
-  Node *n = list_find(g_clients, e->window);
-  if (n && n != cur_client()) {
-    client_select(n);
-  }
-}
-
-// --------------------------------------------------------------------------
 static void create_handlers(void) {
 // --------------------------------------------------------------------------
   // -- create keyboard shortcuts
@@ -1052,7 +990,6 @@ static void create_handlers(void) {
 static void sigchld(int sig) {
 // --------------------------------------------------------------------------
   if (signal(SIGCHLD, sigchld) == SIG_ERR) {
-    puts("oops, someting went wrong, exiting.");
     exit(1);
   }
   while (0 <waitpid(-1, NULL, WNOHANG))
@@ -1093,3 +1030,4 @@ int main(int argc, char **argv) {
   // -- should not get here, proper exit is via quit(args) function
   return EXIT_SUCCESS;
 }
+

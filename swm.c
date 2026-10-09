@@ -253,6 +253,7 @@ static void client_select(Node* n) {
   XSetWindowBorderWidth(g_display, win, BORDER_WIDTH);
   XSetWindowBorder     (g_display, win, g_clr_selected);
   XSetInputFocus       (g_display, win, RevertToPointerRoot, CurrentTime);
+  XRaiseWindow         (g_display, win);
 
   if (n->state == STATE_NEW) {
     XWindowAttributes attr;
